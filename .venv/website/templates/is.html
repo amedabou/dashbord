@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graphiques des Indices des Collèges</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <select id="schoolSelector"></select>
+    <div class="graph">
+        <h2 id="isCharTtitre"></h2>
+        <div id="isChartContainer"></div>
+    </div>
+    <script>
+        // Simuler `colleges` à partir de votre fichier JSON pour l'exemple
+        const colleges = {{ colleges | tojson | safe }};
+        const selector = document.getElementById('schoolSelector');
+
+        colleges.forEach((college) => {
+            const option = new Option(college.uai, college.uai);
+            selector.appendChild(option);
+        });
+
+        selector.addEventListener('change', function() {
+            const selectedUAI = this.value;
+            const college = colleges.find(c => c.uai === selectedUAI);
+            createISChartForCollege(college);
+        });
+
+        
+        function createISChartForCollege(college) {
+            console.log("Creating chart for:", college.uai);
+            // Convertir en nombres entiers, avec une valeur par défaut de 0 en cas de données manquantes
+            const indiceEloignement = parseInt(college.indiceeloignement, 10) || 0;
+            const ips = parseInt(college.ips, 10) || 0;
+
+            
+            const titre = document.getElementById('isCharTtitre');
+            titre.innerHTML = `Indice d\'éloignement et IPS de l'école UAI: ${college.uai}` ;
+            
+            
+            const chartContainer = document.getElementById('isChartContainer');
+            chartContainer.innerHTML = '';
+
+
+            
+            const canvas = document.createElement('canvas');
+            canvas.id = `chart-${college.uai}`;
+            chartContainer.appendChild(canvas);
+
+            const ctx = canvas.getContext('2d');
+            const chartData = {
+                labels: ['Indice d\'éloignement', 'IPS'],
+                datasets: [{
+                    label: `École UAI: ${college.uai}`,
+                    data: [indiceEloignement, ips],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(255,99,132,1)',
+                        'rgba(54, 162, 235, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            };
+            const chartOptions = {
+                type: 'bar',
+                data: chartData,
+                options: {
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true
+                            }
+                        }]
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            };
+
+            new Chart(ctx, chartOptions);
+            
+        }
+
+
+
+
+
+        
+    </script>
+</body>
+</html>

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
+    <title>Graphiques </title>
+    <style>
+        div.row {
+        width:100%;
+        overflow:auto;
+        }
+        div.row div {
+        width:50%;  
+        float:left;
+      }
+    </style>
+    <!-- <style src="AllStyles.css"></style> -->
+    
+</head>
+<body>
+    <div class="row">
+        <div class="graph">
+        <select id="schoolSelector" ></select>
+            <form id="myForm">
+                <label for="option1"><input type="checkbox" id="option1" value="Option 1"> Effectifs dans l'école </label><br>
+                <label for="option2"><input type="checkbox" id="option2" value="Option 2"> Indice d'éloignement et IPS de l'école </label><br>
+                <label for="option3"><input type="checkbox" id="option3" value="Option 3"> Equipement de l'école </label><br>
+                <button type="button" onclick="getSelectedOptions()">Obtenir les graphiques sélectionnés</button>
+                <button type="button" onclick="clearAll()">effacer tout</button>
+            </form>
+        </div>
+        <h1 id = "ecole" class="graph"></h1>
+    </div>
+
+
+    <div class="row">
+        <div class="graph" id="effectifsChartContainer">
+        </div>
+        <div class="graph" id="isChartContainer">
+        </div>
+    </div>
+    
+    <div class="graph" id="equipementChartContainer">
+    </div>
+    
+    
+    <script>
+        
+
+        const colleges = {{ colleges | tojson | safe }};
+        const selector = document.getElementById('schoolSelector');
+
+        colleges.forEach((college) => {
+            
+            const option = new Option(college.uai, college.uai);
+            selector.appendChild(option);
+        });
+
+        function getSelectedOptions() {
+            var selectedOptions = [];
+            var checkboxes = document.querySelectorAll('input[type="checkbox"]:checked');
+            checkboxes.forEach(function(checkbox) {
+                selectedOptions.push(checkbox.value);
+            });
+
+            const selectedUAI = selector.value;
+            const college = colleges.find(c => c.uai === selectedUAI);
+            
+            clearGraphs();
+            document.getElementById('ecole').innerHTML = `Ecole d'UAI: ${college.uai}`;
+
+            selectedOptions.forEach(optionValue => {
+                if (optionValue === 'Option 1') // Vérifiez si la valeur correspond à 'Option 1'
+                    createEffectifsChartForCollege(college);
+                else if (optionValue === 'Option 2') // Vérifiez si la valeur correspond à 'Option 2'
+                    createISChartForCollege(college);
+                else if (optionValue === 'Option 3') // Vérifiez si la valeur correspond à 'Option 3'
+                    createEquipementChartForCollege(college);
+            });
+        }
+
+        function clearAll()
+        {
+            clearGraphs();
+            document.getElementById('ecole').innerHTML = '';
+            var checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(function(checkbox) {
+                checkbox.checked = false; // Décocher chaque case à cocher
+            });
+        }
+        function clearGraphs(){
+            
+            document.getElementById('effectifsChartContainer').innerHTML = '';
+            document.getElementById('isChartContainer').innerHTML = '';
+            document.getElementById('equipementChartContainer').innerHTML = '';
+            
+        }
+
+        selector.addEventListener('change', getSelectedOptions );
+
+
+
+        function createEffectifsChartForCollege(college) {
+            console.log("Creating effectifs chart for:", college.uai);
+
+            
+
+            /*const titre = document.createElement('h2');
+            document.getElementById('effectifsChartContainer').appendChild(titre);
+            titre.setAttribute('id','effectifsChartTitre');
+
+            titre.innerHTML = `Effectifs dans l'école UAI: ${college.uai}` ;*/
+            
+            
+            const chartContainer = document.createElement('div');
+            document.getElementById('effectifsChartContainer').appendChild(chartContainer);
+            
+            
+
+
+            const canvas = document.createElement('canvas');
+            canvas.id = `effectifs-chart-${college.uai}`;
+            effectifsChartContainer.appendChild(canvas);
+
+            const ctx = canvas.getContext('2d');
+            const effectifsChartData = {
+                labels: ['Filles', 'Garçons'],
+                datasets: [{
+                    label: `Effectifs pour l'école UAI: ${college.uai}`,
+                    data: [
+                        parseInt(college.effectifs_filles, 10),
+                        parseInt(college.effectifs_garcons, 10)
+                    ],
+                    backgroundColor: ['rgba(255, 99, 132, 0.2)', 'rgba(54, 162, 235, 0.2)'],
+                    borderColor: ['rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)'],
+                    borderWidth: 1
+                }]
+            };
+            const effectifsChartOptions = {
+                type: 'pie',
+                data: effectifsChartData,
+                options: {
+                    scales: {
+                        yAxes: [{ ticks: { beginAtZero: true } }]
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            };
+            new Chart(ctx, effectifsChartOptions);
+        }
+
+
+        function createISChartForCollege(college) {
+            console.log("Creating chart for:", college.uai);
+            // Convertir en nombres entiers, avec une valeur par défaut de 0 en cas de données manquantes
+            const indiceEloignement = parseInt(college.indiceeloignement, 10) || 0;
+            const ips = parseInt(college.ips, 10) || 0;
+
+            const titre = document.createElement('h2');
+            document.getElementById('isChartContainer').appendChild(titre);
+            titre.setAttribute('id','isCharTtitre');
+
+            titre.innerHTML = `Indice d\'éloignement et IPS de l'école UAI: ${college.uai}` ;
+            
+            
+            const chartContainer = document.createElement('div');
+            document.getElementById('isChartContainer').appendChild(chartContainer);
+
+
+
+            
+            const canvas = document.createElement('canvas');
+            canvas.id = `chart-${college.uai}`;
+            chartContainer.appendChild(canvas);
+
+            const ctx = canvas.getContext('2d');
+            const chartData = {
+                labels: ['Indice d\'éloignement', 'IPS'],
+                datasets: [{
+                    label: `École UAI: ${college.uai}`,
+                    data: [indiceEloignement, ips],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(255,99,132,1)',
+                        'rgba(54, 162, 235, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            };
+            const chartOptions = {
+                type: 'bar',
+                data: chartData,
+                options: {
+                    scales: {
+                        yAxes: [{
+                            ticks: {
+                                beginAtZero: true
+                            }
+                        }]
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            };
+
+            new Chart(ctx, chartOptions);
+            
+        }
+
+
+        function createEquipementChartForCollege(college) {
+            console.log("Creating chart for:", college.uai);
+
+        
+            college.termifix = parseInt(college.termifix, 10);
+            college.termifixcinq = parseInt(college.termifixcinq, 10);
+            college.termimob = parseInt(college.termimob, 10);
+            college.termimobcinq = parseInt(college.termimobcinq, 10);
+            college.outilsvideo = parseInt(college.outilsvideo, 10);
+
+
+
+            const titre = document.createElement('h2');
+            document.getElementById('equipementChartContainer').appendChild(titre);
+            titre.setAttribute('id','equipementChartTitre');
+
+            titre.innerHTML = `Equipement de l'école UAI: ${college.uai}` ;
+            
+            
+            const chartContainer = document.createElement('div');
+            document.getElementById('equipementChartContainer').appendChild(chartContainer);
+
+
+            const canvas = document.createElement('canvas');
+            canvas.id = `chart-${college.uai}`;
+            chartContainer.appendChild(canvas);
+
+        
+            const ctx = canvas.getContext('2d');
+            const chartData = {
+                labels: ['termifix', 'termifixcinq', 'termimob', 'termimobcinq', 'outilsvideo'],
+                datasets: [{
+                    label: `École UAI: ${college.uai}`,
+                    data: [
+                        college.termifix,
+                        college.termifixcinq,
+                        college.termimob,
+                        college.termimobcinq,
+                        college.outilsvideo
+                    ],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(153, 102, 255, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            };
+            const chartOptions = {
+                type: 'bar',
+                data: chartData,
+                options: {
+                    scales: {
+                        yAxes: [{ ticks: { beginAtZero: true } }]
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            };
+            new Chart(ctx, chartOptions);
+        }
+    </script>
+
+    <!--<script src="fonctions.js"></script>-->
+
+
+
+</body>
+</html>

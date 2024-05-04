@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        div.row {
+        width:100%;
+        overflow:auto;
+        }
+        div.row div {
+        width:50%;  
+        float:left;
+      }
+    </style> 
+</head>
+<body>
+    <select id="schoolSelector" ></select>
+    <div class="graph">
+        <h2 id="effectifsChartTitre"></h2>
+        <div id="effectifsChartContainer"></div>
+    </div>
+    <script>
+        const colleges = {{ colleges | tojson | safe }};
+        const selector = document.getElementById('schoolSelector');
+
+        colleges.forEach((college) => {
+            const option = new Option(college.uai, college.uai);
+            selector.appendChild(option);
+        });
+
+        
+        selector.addEventListener('change', function() {
+            const selectedUAI = this.value;
+            const college = colleges.find(c => c.uai === selectedUAI);
+            createEffectifsChartForCollege(college);
+        });
+
+        function createEffectifsChartForCollege(college) {
+            console.log("Creating effectifs chart for:", college.uai);
+
+            
+
+            const titre = document.getElementById('effectifsChartTitre');
+            titre.innerHTML = `éffectifs dans l'école UAI: ${college.uai}` ;
+            
+            
+            const chartContainer = document.getElementById('effectifsChartContainer');
+            chartContainer.innerHTML = '';
+
+            const canvas = document.createElement('canvas');
+            canvas.id = `effectifs-chart-${college.uai}`;
+            effectifsChartContainer.appendChild(canvas);
+
+            const ctx = canvas.getContext('2d');
+            const effectifsChartData = {
+                labels: ['Filles', 'Garçons'],
+                datasets: [{
+                    label: `Effectifs pour l'école UAI: ${college.uai}`,
+                    data: [
+                        parseInt(college.effectifs_filles, 10),
+                        parseInt(college.effectifs_garcons, 10)
+                    ],
+                    backgroundColor: ['rgba(255, 99, 132, 0.2)', 'rgba(54, 162, 235, 0.2)'],
+                    borderColor: ['rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)'],
+                    borderWidth: 1
+                }]
+            };
+            const effectifsChartOptions = {
+                type: 'pie',
+                data: effectifsChartData,
+                options: {
+                    scales: {
+                        yAxes: [{ ticks: { beginAtZero: true } }]
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            };
+            new Chart(ctx, effectifsChartOptions);
+        }
+
+
+
+    </script>
+   <!-- <script src="{{ url_for('static', filename='effectifsScript.js') }}"></script>-->
+</body>
+</html>

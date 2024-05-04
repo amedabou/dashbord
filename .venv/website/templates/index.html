@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Template</title>
+    <style>
+        /* Styles CSS */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .sidebar {
+            width: 100px; /* Largeur de la sidebar ajustée */
+            background-color: #87CEEB;
+            border: 2px solid #87CEEB;
+            border-radius: 50%;
+            position: fixed;
+            height: 100px; /* Hauteur de la sidebar ajustée */
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .sidebar h2 {
+            margin: 0;
+            color: #fff;
+            font-size: 14px; /* Taille de police ajustée */
+        }
+        .content {
+            margin-left: 120px; /* Ajuster la marge pour laisser de l'espace à la sidebar */
+            padding: 20px;
+            border-left: 1px solid #ccc; /* Ajout de la bordure grise */
+        }
+        .header, .footer, .text-zone {
+            background-color: #87CEEB;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            text-align: center; /* Centrer le texte */
+        }
+        .header h1, .footer p {
+            margin: 0;
+            color: #fff;
+        }
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+        .image-container {
+            display: flex;
+            flex-wrap: wrap; /* Permet le passage à la ligne des éléments flexibles */
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        .image-container .text-zone {
+            width: calc(30% - 40px); /* Ajustement de la largeur */
+            height: 200px; /* Ajustement de la hauteur */
+            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .white-zone {
+            background-color: #ffffff; /* Bleu ciel */
+        }
+        .pink-zone {
+            background-color: #FFB6C1; /* Rose clair */
+        }
+        .gray-zone {
+            background-color: #F5F5F5; /* Gris clair */
+        }
+        .container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .select-container,
+        .chart-container {
+            width: 100px; /* Modifier la taille du graphique */
+            height: 100px; /* Modifier la taille du graphique */
+            margin: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <a href="#" style="text-decoration: none; color: inherit;">
+            <h2>Dashboard</h2>
+        </a>
+    </div>
+    <div class="content">
+        <div class="header">
+            <h1>Welcome to Your Dashboard</h1>
+        </div>
+        <div class="main-content">
+            <h2>Content Goes Here</h2>
+            <p>This is where you can display charts, tables, and other dashboard elements.</p>
+            <div class="image-container">
+                <div class="text-zone white-zone">
+                    <select id="schoolEffectifsSelector"></select>
+                    <div id="effectifsChartContainer"></div>
+
+                </div>
+                <div class="text-zone white-zone">
+                    <select id="schoolSelector"></select>
+                    <div id="chartContainer"></div>
+                </div>
+                <div class="text-zone white-zone">
+                    <select id="schoolSelectorequi"></select>
+                    <div id="chartContainerequi"></div>
+                </div>
+                <div class="folium-map" id="map_54e53e87fc4d74528362133b40e8fad4" ></div>
+            </div>
+        </div>
+        <div class="footer">
+            <p>Projet Codev n°15</p>
+        </div>
+    </div>
+ 
+</body>
+<script>
+    const collegesEffectifs = {{ colleges | tojson | safe }};
+    const selectorEffectifs = document.getElementById('schoolEffectifsSelector');
+
+   
+    collegesEffectifs.forEach((college) => {
+        const option = new Option(college.uai, college.uai);
+        selectorEffectifs.appendChild(option);
+    });
+
+  
+    selectorEffectifs.addEventListener('change', function() {
+        const selectedUAI = this.value;
+        const college = collegesEffectifs.find(c => c.uai === selectedUAI);
+        createEffectifsChartForCollege(college);
+    });
+
+
+    function createEffectifsChartForCollege(college) {
+        console.log("Creating effectifs chart for:", college.uai);
+
+        const effectifsChartContainer = document.getElementById('effectifsChartContainer');
+        effectifsChartContainer.innerHTML = ''; 
+        const canvas = document.createElement('canvas');
+        canvas.id = `effectifs-chart-${college.uai}`;
+        // Modifier la taille du canvas ici
+        canvas.width = 200; // Largeur de 100 pixels
+        canvas.height = 200; // Hauteur de 100 pixels
+        effectifsChartContainer.appendChild(canvas);
+
+        const ctx = canvas.getContext('2d');
+        const effectifsChartData = {
+            labels: ['Filles', 'Garçons'],
+            datasets: [{
+                label: `Effectifs pour l'école UAI: ${college.uai}`,
+                data: [
+                    parseInt(college.effectifs_filles, 10),
+                    parseInt(college.effectifs_garcons, 10)
+                ],
+                backgroundColor: ['rgba(255, 99, 132, 0.2)', 'rgba(54, 162, 235, 0.2)'],
+                borderColor: ['rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)'],
+                borderWidth: 1
+            }]
+        };
+        const effectifsChartOptions = {
+            type: 'pie',
+            data: effectifsChartData,
+            options: {
+                scales: {
+                    yAxes: [{ ticks: { beginAtZero: true } }]
+                },
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        };
+        new Chart(ctx, effectifsChartOptions);
+    }
+</script>
+<script src="{{ url_for('static', filename='effectifsScript.js') }}"></script>
+
+<script>
+    // Simuler `colleges` à partir de votre fichier JSON pour l'exemple
+    const colleges = {{ colleges | tojson | safe }};
+    const selector = document.getElementById('schoolSelector');
+
+    colleges.forEach((college) => {
+        const option = new Option(college.uai, college.uai);
+        selector.appendChild(option);
+    });
+
+    selector.addEventListener('change', function() {
+        const selectedUAI = this.value;
+        const college = colleges.find(c => c.uai === selectedUAI);
+        createChartForCollege(college);
+    });
+
+    function createChartForCollege(college) {
+        console.log("Creating chart for:", college.uai);
+        // Convertir en nombres entiers, avec une valeur par défaut de 0 en cas de données manquantes
+        const indiceEloignement = parseInt(college.indiceeloignement, 10) || 0;
+        const ips = parseInt(college.ips, 10) || 0;
+
+        const chartContainer = document.getElementById('chartContainer');
+        chartContainer.innerHTML = '';
+        const canvas = document.createElement('canvas');
+        canvas.id = `chart-${college.uai}`;
+        chartContainer.appendChild(canvas);
+
+        const ctx = canvas.getContext('2d');
+        const chartData = {
+            labels: ['Indice d\'éloignement', 'IPS'],
+            datasets: [{
+                label: `École UAI: ${college.uai}`,
+                data: [indiceEloignement, ips],
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.2)',
+                    'rgba(54, 162, 235, 0.2)'
+                ],
+                borderColor: [
+                    'rgba(255,99,132,1)',
+                    'rgba(54, 162, 235, 1)'
+                ],
+                borderWidth: 1
+            }]
+        };
+        const chartOptions = {
+            type: 'bar',
+            data: chartData,
+            options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero: true
+                        }
+                    }]
+                },
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        };
+
+        new Chart(ctx, chartOptions);
+    }
+</script>
+
+
+
+
+
+<script>
+    const collegesEqui = {{ colleges | tojson | safe }};
+    const selectorEqui = document.getElementById('schoolSelectorequi');
+    
+    
+    collegesEqui.forEach((college) => {
+        const option = new Option(college.uai, college.uai);
+        selectorEqui.appendChild(option);
+    });
+
+  
+    selectorEqui.addEventListener('change', function() {
+        const selectedUAI = this.value;
+        const college = collegesEqui.find(c => c.uai === selectedUAI);
+        createEquiChartForCollege(college);
+    });
+
+    function createEquiChartForCollege(college) {
+        console.log("Creating chart for:", college.uai);
+
+       
+        college.termifix = parseInt(college.termifix, 10);
+        college.termifixcinq = parseInt(college.termifixcinq, 10);
+        college.termimob = parseInt(college.termimob, 10);
+        college.termimobcinq = parseInt(college.termimobcinq, 10);
+        college.outilsvideo = parseInt(college.outilsvideo, 10);
+
+        
+        const chartContainer = document.getElementById('chartContainerequi');
+        chartContainer.innerHTML = ''; 
+        const canvas = document.createElement('canvas');
+        canvas.id = `chart-${college.uai}`;
+        chartContainer.appendChild(canvas);
+
+     
+        const ctx = canvas.getContext('2d');
+        const chartData = {
+            labels: ['termifix', 'termifixcinq', 'termimob', 'termimobcinq', 'outilsvideo'],
+            datasets: [{
+                label: `École UAI: ${college.uai}`,
+                data: [
+                    college.termifix,
+                    college.termifixcinq,
+                    college.termimob,
+                    college.termimobcinq,
+                    college.outilsvideo
+                ],
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.2)',
+                    'rgba(54, 162, 235, 0.2)',
+                    'rgba(255, 206, 86, 0.2)',
+                    'rgba(75, 192, 192, 0.2)',
+                    'rgba(153, 102, 255, 0.2)'
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)'
+                ],
+                borderWidth: 1
+            }]
+        };
+        const chartOptions = {
+            type: 'bar',
+            data: chartData,
+            options: {
+                scales: {
+                    yAxes: [{ ticks: { beginAtZero: true } }]
+                },
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        };
+        new Chart(ctx, chartOptions);
+    }
+</script>
+<script src="maps.js"></script>
+</html>

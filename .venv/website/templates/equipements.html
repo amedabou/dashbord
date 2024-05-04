@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        div.row {
+        width:100%;
+        overflow:auto;
+        }
+        div.row div {
+        width:100%;  
+        float:left;
+      }
+    </style>
+    
+</head>
+<body>
+    <select id="schoolSelector" ></select>
+
+    
+    <div class="graph">
+        <h2 id="equipementChartTitre"></h2>
+        <div id="equipementChartContainer"></div>
+    </div>
+    
+
+    <script>
+        const colleges = {{ colleges | tojson | safe }};
+        const selector = document.getElementById('schoolSelector');
+
+        colleges.forEach((college) => {
+            const option = new Option(college.uai, college.uai);
+            selector.appendChild(option);
+        });
+
+        
+        selector.addEventListener('change', function() {
+            const selectedUAI = this.value;
+            const college = colleges.find(c => c.uai === selectedUAI);
+            createEquipementChartForCollege(college);
+        });
+
+        function createEquipementChartForCollege(college) {
+            console.log("Creating chart for:", college.uai);
+
+        
+            college.termifix = parseInt(college.termifix, 10);
+            college.termifixcinq = parseInt(college.termifixcinq, 10);
+            college.termimob = parseInt(college.termimob, 10);
+            college.termimobcinq = parseInt(college.termimobcinq, 10);
+            college.outilsvideo = parseInt(college.outilsvideo, 10);
+
+            const titre = document.getElementById('equipementChartTitre');
+            titre.innerHTML = `équipement de l'école UAI: ${college.uai}` ;
+            
+            
+            const chartContainer = document.getElementById('equipementChartContainer');
+            chartContainer.innerHTML = '';
+
+
+            const canvas = document.createElement('canvas');
+            canvas.id = `chart-${college.uai}`;
+            chartContainer.appendChild(canvas);
+
+        
+            const ctx = canvas.getContext('2d');
+            const chartData = {
+                labels: ['termifix', 'termifixcinq', 'termimob', 'termimobcinq', 'outilsvideo'],
+                datasets: [{
+                    label: `École UAI: ${college.uai}`,
+                    data: [
+                        college.termifix,
+                        college.termifixcinq,
+                        college.termimob,
+                        college.termimobcinq,
+                        college.outilsvideo
+                    ],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(153, 102, 255, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(255, 99, 132, 1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            };
+            const chartOptions = {
+                type: 'bar',
+                data: chartData,
+                options: {
+                    scales: {
+                        yAxes: [{ ticks: { beginAtZero: true } }]
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            };
+            new Chart(ctx, chartOptions);
+        }
+        
+
+    </script>
+</body>
+</html>
